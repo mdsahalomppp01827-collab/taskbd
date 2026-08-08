@@ -1,0 +1,73 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isSignedIn() && (
+        (request.auth.token.email != null && (
+          request.auth.token.email.lower() == 'mdsahalomppp01827@gmail.com' ||
+          request.auth.token.email.lower() == 'serveradmin@nexoratask.com'
+        )) ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
+    }
+
+    match /users/{telegramId} {
+      allow read: if true;
+      allow create, update: if true;
+      allow delete: if isAdmin();
+    }
+    
+    match /tasks/{taskId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /submissions/{submissionId} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if isAdmin();
+    }
+    
+    match /withdrawals/{withdrawalId} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if isAdmin();
+    }
+    
+    match /referrals/{referralId} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if isAdmin();
+    }
+    
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /transactions/{transactionId} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if isAdmin();
+    }
+    
+    match /announcements/{announcementId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /adminLogs/{logId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /admins/{adminUid} {
+      allow read, write: if isAdmin() || (isSignedIn() && request.auth.token.email == 'mdsahalomppp01827@gmail.com');
+    }
+  }
+}
